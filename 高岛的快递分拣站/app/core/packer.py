@@ -5,11 +5,13 @@
 from __future__ import annotations
 
 import sys
+import tempfile
 from pathlib import Path
 from typing import List, Optional
 
 from .command_builder import build_command
 from .config import PackConfig
+from .launcher import write_launcher
 from .process_runner import LogCallback, ProcessRunner
 
 
@@ -43,20 +45,35 @@ class Packer:
                 self._emit(f"[错误] {e}")
             return 1
 
-        # 2. 构建完整命令
+        # 2. 非 Python 脚本时，先生成解包启动器
+        self._prepare_launcher()
+
+        # 3. 构建完整命令
         command = _pyinstaller_command() + build_command(self.config)
         self._emit("执行命令： " + " ".join(command))
 
-        # 3. 在脚本所在目录执行，保证相对路径（如 add-data）正确解析
+        # 4. 在打包对象所在目录执行，保证相对路径（如 add-data）正确解析
         script_dir = str(Path(self.config.script_path).resolve().parent)
 
-        # 4. 后台执行，stdout/stderr 统一汇入同一条日志流
+        # 5. 后台执行，stdout/stderr 统一汇入同一条日志流
         self._runner = ProcessRunner(
             command, on_stdout=self._emit, on_stderr=self._emit, cwd=script_dir
         )
         code = self._runner.run()
         self._emit(f"打包结束，退出码：{code}" + ("（成功）" if code == 0 else "（失败）"))
         return code
+
+    def _prepare_launcher(self) -> None:
+        """非 Python 脚本时，生成用于解包并打开载荷的启动器脚本。
+
+        启动器写入系统临时目录，路径回填到 config.launcher_script，
+        供 command_builder 用作 PyInstaller 的编译入口。
+        """
+        if self.config.is_python_script or self.config.launcher_script:
+            return
+        payload_name = Path(self.config.script_path).name
+        tmp_dir = tempfile.mkdtemp(prefix="gaodao_launcher_")
+        self.config.launcher_script = write_launcher(payload_name, tmp_dir)
 
     def cancel(self) -> None:
         """取消正在进行的打包。"""

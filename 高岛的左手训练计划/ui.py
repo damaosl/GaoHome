@@ -2,6 +2,7 @@
 """界面模块：极简暗色风格，tkinter 实现。"""
 
 import os
+import sys
 import tkinter as tk
 
 from pynput import mouse as pynput_mouse
@@ -25,8 +26,12 @@ FONT       = ("Segoe UI", 10)
 FONT_BOLD  = ("Segoe UI", 10, "bold")
 FONT_TITLE = ("Segoe UI", 13, "bold")
 
-# 应用图标（app.ico 与脚本同目录）
-ICON_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app.ico")
+# 应用图标（源码运行在脚本同目录；打包后从 exe 内临时目录读取）
+if getattr(sys, "frozen", False):
+    _RESOURCE_DIR = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+else:
+    _RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
+ICON_PATH = os.path.join(_RESOURCE_DIR, "app.ico")
 
 
 class Segmented(tk.Frame):

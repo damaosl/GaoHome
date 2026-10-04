@@ -76,6 +76,22 @@ class TestBuildCommand(unittest.TestCase):
         cmd = build_command(cfg)
         self.assertEqual(cmd[-1], "main.py")
 
+    def test_non_python_file_uses_launcher_and_adds_data(self):
+        """非 Python 文件：入口换成解包启动器，载荷走 --add-data，产物名取载荷 stem。"""
+        cfg = PackConfig(script_path="报告.txt", launcher_script="launcher.py")
+        self.assertEqual(
+            build_command(cfg),
+            ["--onefile", "--name", "报告", "--add-data", "报告.txt;报告.txt", "launcher.py"],
+        )
+
+    def test_non_python_file_respects_explicit_name(self):
+        """非 Python 文件显式指定 name 时，优先使用显式 name。"""
+        cfg = PackConfig(
+            script_path="报告.txt", launcher_script="launcher.py", name="产出"
+        )
+        cmd = build_command(cfg)
+        self.assertEqual(cmd[cmd.index("--name") + 1], "产出")
+
 
 if __name__ == "__main__":
     unittest.main()

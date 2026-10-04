@@ -3,9 +3,18 @@
 
 import json
 import os
+import sys
 from dataclasses import dataclass, asdict, field
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+
+def _base_dir():
+    """打包成 exe 后配置保存到 exe 同目录；源码运行时保存在脚本同目录。"""
+    if getattr(sys, "frozen", False):
+        return os.path.dirname(sys.executable)
+    return os.path.dirname(os.path.abspath(__file__))
+
+
+CONFIG_PATH = os.path.join(_base_dir(), "config.json")
 
 
 @dataclass

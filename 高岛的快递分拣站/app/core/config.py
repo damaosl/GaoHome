@@ -1,6 +1,6 @@
 """打包配置数据模型。
 
-本模块定义"把一个 Python 脚本打包成 exe"所需的全部配置项。
+本模块定义"把一个文件打包成 exe"所需的全部配置项。
 它是纯数据层：只依赖标准库，不依赖 UI、也不依赖 PyInstaller，
 因此可以在无图形环境、甚至未安装 PyInstaller 时被独立测试。
 
@@ -9,6 +9,9 @@
 - onefile / console           —— PyInstaller 最核心的两个开关
 - icon_path / add_data        —— 图标与附加资源
 - hidden_imports / extra_args —— 高级能力兜底
+
+打包对象既可以是 Python 脚本（.py/.pyw，直接编译），也可以是任意其他
+类型的文件（由内置启动器解包后打开），从而实现"全文件类型通用"。
 """
 from __future__ import annotations
 
@@ -16,8 +19,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List
 
-# 支持的脚本扩展名
-SUPPORTED_SCRIPT_SUFFIXES = (".py", ".pyw")
+# 可直接交给 PyInstaller 编译的脚本扩展名
+PYTHON_SUFFIXES = (".py", ".pyw")
 
 
 @dataclass
@@ -25,10 +28,14 @@ class PackConfig:
     """一次打包任务的完整配置。"""
 
     # ---- 必填 ----
+    # 打包对象：Python 脚本（.py/.pyw）或任意其他类型的文件
     script_path: str
 
+    # 非 Python 脚本时使用：解包启动器 .py 的路径（由 packer 在打包前写入）
+    launcher_script: str = ""
+
     # ---- 产物 ----
-    # 输出 exe 名称（不含扩展名）；为空则自动取脚本文件名
+    # 输出 exe 名称（不含扩展名）；为空则自动取打包对象文件名
     name: str = ""
 
     # 是否打包为单文件（--onefile）；False 为单目录（--onedir）
@@ -59,28 +66,30 @@ class PackConfig:
     # ---- 派生属性 ----
     @property
     def resolved_name(self) -> str:
-        """最终输出名称；未指定 name 时取脚本文件名（不含扩展名）。"""
+        """最终输出名称；未指定 name 时取打包对象文件名（不含扩展名）。"""
         if self.name:
             return self.name
         return Path(self.script_path).stem
+
+    @property
+    def is_python_script(self) -> bool:
+        """打包对象是否为可直接编译的 Python 脚本。"""
+        return Path(self.script_path).suffix.lower() in PYTHON_SUFFIXES
 
     # ---- 校验 ----
     def validate(self) -> List[str]:
         """校验配置，返回错误信息列表；空列表表示通过。
 
-        这里只做"静态、可快速判断"的校验（文件是否存在、类型对不对），
+        这里只做"静态、可快速判断"的校验（文件是否存在、是否确为文件），
         不涉及实际打包，保证调用方能拿到清晰的用户级报错。
         """
         errors: List[str] = []
 
         sp = Path(self.script_path)
         if not sp.exists():
-            errors.append(f"脚本文件不存在：{self.script_path}")
-        elif sp.suffix.lower() not in SUPPORTED_SCRIPT_SUFFIXES:
-            errors.append(
-                f"仅支持 {' / '.join(SUPPORTED_SCRIPT_SUFFIXES)} 脚本，"
-                f"收到：{sp.suffix or '(无扩展名)'}"
-            )
+            errors.append(f"文件不存在：{self.script_path}")
+        elif not sp.is_file():
+            errors.append(f"不是文件：{self.script_path}")
 
         if self.icon_path and not Path(self.icon_path).exists():
             errors.append(f"图标文件不存在：{self.icon_path}")

@@ -23,18 +23,16 @@ class TestPackerValidation(unittest.TestCase):
         )
         code = packer.pack()
         self.assertNotEqual(code, 0)
-        self.assertTrue(any("脚本文件不存在" in ln for ln in logs))
+        self.assertTrue(any("文件不存在" in ln for ln in logs))
 
-    def test_wrong_extension_fails_fast(self):
-        """非 .py/.pyw 扩展名应在校验阶段拦截。"""
+    def test_non_python_file_is_allowed(self):
+        """非 Python 文件不再被校验拦截（由解包启动器打包）。"""
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as f:
             path = f.name
         try:
-            logs: list[str] = []
-            packer = Packer(PackConfig(script_path=path), on_log=logs.append)
-            code = packer.pack()
-            self.assertNotEqual(code, 0)
-            self.assertTrue(any("仅支持" in ln for ln in logs))
+            cfg = PackConfig(script_path=path)
+            self.assertEqual(cfg.validate(), [])
+            self.assertFalse(cfg.is_python_script)
         finally:
             os.unlink(path)
 

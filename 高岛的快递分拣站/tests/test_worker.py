@@ -29,7 +29,7 @@ class TestPackWorker(unittest.TestCase):
         worker.run()
 
         self.assertEqual(codes, [1])
-        self.assertTrue(any("脚本文件不存在" in ln for ln in logs))
+        self.assertTrue(any("文件不存在" in ln for ln in logs))
 
 
 if __name__ == "__main__":

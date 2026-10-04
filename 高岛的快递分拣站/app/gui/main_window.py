@@ -1,6 +1,6 @@
 """主窗口：极简风格的一键打包界面。
 
-布局：标题 → 分隔线 → 脚本选择 → 选项 → 图标（可选）→ 按钮 → 日志。
+布局：标题 → 分隔线 → 文件选择 → 选项 → 图标（可选）→ 按钮 → 日志。
 单列纵向流、大留白，与 theme 的极简风格一致。
 """
 from __future__ import annotations
@@ -54,16 +54,16 @@ class MainWindow(QMainWindow):
         # 标题区
         title = QLabel("高岛的快递分拣站")
         title.setObjectName("title")
-        subtitle = QLabel("一键将 Python 脚本打包为 exe")
+        subtitle = QLabel("一键将任意文件打包为 exe")
         subtitle.setObjectName("subtitle")
         root.addWidget(title)
         root.addWidget(subtitle)
         root.addWidget(self._separator())
 
-        # 脚本文件
-        root.addWidget(self._section("脚本文件"))
+        # 打包对象文件
+        root.addWidget(self._section("文件"))
         self.script_edit = QLineEdit()
-        self.script_edit.setPlaceholderText("选择要打包的 .py 文件")
+        self.script_edit.setPlaceholderText("选择要打包的文件（任意类型）")
         self.script_edit.textChanged.connect(self._on_input_changed)
         browse_script = QPushButton("浏览")
         browse_script.clicked.connect(self._browse_script)
@@ -92,7 +92,7 @@ class MainWindow(QMainWindow):
         # 按钮区
         self.pack_btn = QPushButton("开始打包")
         self.pack_btn.setObjectName("primary")
-        self.pack_btn.setEnabled(False)  # 初始脚本为空，禁用主按钮
+        self.pack_btn.setEnabled(False)  # 初始未选择文件，禁用主按钮
         self.pack_btn.clicked.connect(self._start_pack)
         self.cancel_btn = QPushButton("取消")
         self.cancel_btn.setEnabled(False)
@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
     # ---------- 事件处理 ----------
     def _browse_script(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "选择 Python 脚本", "", "Python 脚本 (*.py *.pyw)"
+            self, "选择要打包的文件", "", "所有文件 (*)"
         )
         if path:
             self.script_edit.setText(path)
@@ -161,13 +161,13 @@ class MainWindow(QMainWindow):
             self.icon_edit.setText(path)
 
     def _on_input_changed(self, _text: str) -> None:
-        """脚本路径为空时禁用主按钮，避免误点。"""
+        """文件路径为空时禁用主按钮，避免误点。"""
         self.pack_btn.setEnabled(bool(self.script_edit.text().strip()) and not self._is_running())
 
     def _start_pack(self) -> None:
         script = self.script_edit.text().strip()
         if not script:
-            self._append_log("[错误] 请先选择脚本文件")
+            self._append_log("[错误] 请先选择要打包的文件")
             return
 
         icon = self.icon_edit.text().strip()
@@ -226,10 +226,10 @@ class MainWindow(QMainWindow):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent) -> None:  # noqa: N802
-        """拖入 .py/.pyw 文件时自动填入脚本路径。"""
+        """拖入任意文件时自动填入打包对象路径（目录忽略）。"""
         for url in event.mimeData().urls():
             path = url.toLocalFile()
-            if path.lower().endswith((".py", ".pyw")):
+            if path and Path(path).is_file():
                 self.script_edit.setText(path)
                 break
 

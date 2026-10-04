@@ -1,4 +1,4 @@
-"""高岛的快递分拣站 —— 一键将 Python 脚本打包成 exe 的工具。"""
+"""高岛的快递分拣站 —— 一键将任意文件打包成 exe 的工具。"""
 
 from pathlib import Path
 
