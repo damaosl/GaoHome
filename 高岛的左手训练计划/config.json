@@ -1,0 +1,15 @@
+{
+  "input_type": "sequence",
+  "mouse_button": "right",
+  "follow_cursor": true,
+  "mouse_x": 0,
+  "mouse_y": 0,
+  "keyboard_key": "q",
+  "key_sequence": [],
+  "action": "click",
+  "cps": 50.0,
+  "hold_duration": 1.0,
+  "duration": 0.0,
+  "start_key": "<right>",
+  "stop_key": "<left>"
+}
