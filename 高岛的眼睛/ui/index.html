@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>高岛的眼睛</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" href="/app.ico" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo">高岛的眼睛</span>
+      <span class="tagline">假反馈拦截 · 极简</span>
+    </div>
+    <div class="topbar-actions">
+      <span class="chip" id="meta-chip">—</span>
+      <a class="btn ghost" id="ca-download" href="/api/ca.crt" download>下载 CA 证书</a>
+      <button class="btn ghost" id="theme-toggle" title="切换主题">◐</button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel proxy-panel">
+      <div class="panel-head">
+        <h2>一键代理</h2>
+        <span class="hint">选择目标应用，开启后自动把它的流量指向本工具</span>
+      </div>
+      <ul class="proxy-targets" id="proxy-targets"></ul>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>规则</h2>
+        <button class="btn" id="add-rule">+ 新增</button>
+      </div>
+      <ul class="rules" id="rules"></ul>
+      <p class="empty" id="rules-empty" hidden>暂无规则。点击「+ 新增」创建第一条。</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>流量</h2>
+        <button class="btn ghost" id="clear-logs">清空</button>
+      </div>
+      <ul class="logs" id="logs"></ul>
+      <p class="empty" id="logs-empty" hidden>暂无流量。把应用代理指向本工具后即可看到。</p>
+    </section>
+  </main>
+
+  <div class="modal" id="modal" hidden>
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="modal-title">新增规则</h3>
+        <button class="btn ghost" id="modal-close">✕</button>
+      </div>
+      <form id="rule-form" autocomplete="off">
+        <input type="hidden" id="f-id" />
+
+        <label>名称
+          <input id="f-name" placeholder="例如：伪造用户信息" required />
+        </label>
+
+        <div class="grid-2">
+          <label>匹配方式
+            <select id="f-type">
+              <option value="substring">包含 (substring)</option>
+              <option value="regex">正则 (regex)</option>
+              <option value="glob">通配 (glob)</option>
+            </select>
+          </label>
+          <label>方向
+            <select id="f-phase">
+              <option value="response">反馈方向 (response)</option>
+              <option value="request">去程方向 (request)</option>
+            </select>
+          </label>
+        </div>
+
+        <label>URL 模式
+          <input id="f-pattern" placeholder="例如：api.example.com/user" required />
+        </label>
+
+        <label>方法（可选，逗号分隔，留空不限）
+          <input id="f-methods" placeholder="GET,POST" />
+        </label>
+
+        <label>动作模式
+          <select id="f-mode">
+            <option value="replace">截止更改（完全替换）</option>
+            <option value="append">追加（在原始反馈上加内容）</option>
+            <option value="modify">改返回值（JSON 字段级）</option>
+            <option value="guide">引导（重定向）</option>
+          </select>
+        </label>
+
+        <div id="action-fields"></div>
+
+        <label>备注（可选）
+          <input id="f-note" placeholder="这条规则是做什么的" />
+        </label>
+
+        <div class="modal-foot">
+          <button type="button" class="btn ghost" id="modal-cancel">取消</button>
+          <button type="submit" class="btn">保存</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>

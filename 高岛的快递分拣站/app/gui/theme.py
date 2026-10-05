@@ -102,6 +102,28 @@ QPushButton#primary:disabled {{
     border-color: {COLOR_BORDER};
 }}
 
+/* ===== 对话框 ===== */
+QLabel#dialogTitle {{
+    font-size: 16px;
+    font-weight: 600;
+}}
+QLabel#dialogHint {{
+    color: {COLOR_TEXT_SECONDARY};
+}}
+QListWidget {{
+    border: 1px solid {COLOR_BORDER};
+    border-radius: 4px;
+    background: {COLOR_BG};
+    outline: none;
+}}
+QListWidget::item {{
+    padding: 7px 10px;
+}}
+QListWidget::item:selected {{
+    background: {COLOR_ACCENT};
+    color: {COLOR_ACCENT_TEXT};
+}}
+
 /* ===== 复选框 ===== */
 QCheckBox {{
     spacing: 6px;

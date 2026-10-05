@@ -12,6 +12,7 @@ from PySide6.QtCore import QUrl
 from PySide6.QtGui import QCloseEvent, QDesktopServices, QDragEnterEvent, QDropEvent, QIcon
 from PySide6.QtWidgets import (
     QCheckBox,
+    QDialog,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -26,7 +27,9 @@ from PySide6.QtWidgets import (
 
 from app import PROJECT_ICON_PATH
 from app.core.config import PackConfig
+from app.core.entry_finder import scan_entry_candidates
 from app.gui.theme import QSS
+from app.gui.widgets.entry_select_dialog import EntrySelectDialog
 from app.gui.worker import PackWorker
 from app.utils.icon_utils import convert_to_ico
 
@@ -60,14 +63,16 @@ class MainWindow(QMainWindow):
         root.addWidget(subtitle)
         root.addWidget(self._separator())
 
-        # 打包对象文件
-        root.addWidget(self._section("文件"))
+        # 打包对象：文件，或文件夹（自动识别入口）
+        root.addWidget(self._section("文件 / 文件夹"))
         self.script_edit = QLineEdit()
-        self.script_edit.setPlaceholderText("选择要打包的文件（任意类型）")
+        self.script_edit.setPlaceholderText("选择文件，或选择文件夹自动识别入口（也可拖入）")
         self.script_edit.textChanged.connect(self._on_input_changed)
-        browse_script = QPushButton("浏览")
+        browse_script = QPushButton("浏览文件")
         browse_script.clicked.connect(self._browse_script)
-        root.addLayout(self._row(self.script_edit, browse_script))
+        browse_folder = QPushButton("浏览文件夹")
+        browse_folder.clicked.connect(self._browse_folder)
+        root.addLayout(self._row(self.script_edit, browse_script, browse_folder))
 
         # 选项
         self.onefile_check = QCheckBox("打包为单文件")
@@ -160,6 +165,41 @@ class MainWindow(QMainWindow):
         if path:
             self.script_edit.setText(path)
 
+    def _browse_folder(self) -> None:
+        path = QFileDialog.getExistingDirectory(
+            self, "选择文件夹，自动识别打包入口", ""
+        )
+        if path:
+            self._load_folder(path)
+
+    def _load_folder(self, folder: str) -> None:
+        """放入文件夹：扫描并自动找出合适的入口文件填入打包对象。
+
+        - 无候选：提示后保持原输入不变；
+        - 唯一最佳：直接填入；
+        - 多个同级候选：弹窗让用户选择。
+        """
+        result = scan_entry_candidates(folder)
+        if not result.candidates:
+            self._append_log(f"[提示] 文件夹内未找到可打包的入口脚本（.py / .pyw）：{folder}")
+            return
+
+        if result.best is not None and not result.is_ambiguous:
+            self._apply_entry(result.best, auto=True)
+            return
+
+        dialog = EntrySelectDialog(Path(folder), result.candidates, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted and dialog.selected_path is not None:
+            self._apply_entry(dialog.selected_path, auto=False)
+
+    def _apply_entry(self, path: Path, auto: bool) -> None:
+        """把选定的入口文件填入打包对象输入框并记录日志。"""
+        self.script_edit.setText(str(path))
+        if auto:
+            self._append_log(f"[提示] 已自动识别入口：{path.name}")
+        else:
+            self._append_log(f"[提示] 已选择入口：{path.name}")
+
     def _browse_icon(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
             self, "选择图标", "", "图标文件 (*.ico *.png)"
@@ -239,10 +279,15 @@ class MainWindow(QMainWindow):
             event.acceptProposedAction()
 
     def dropEvent(self, event: QDropEvent) -> None:  # noqa: N802
-        """拖入任意文件时自动填入打包对象路径（目录忽略）。"""
+        """拖入文件直接填入打包对象；拖入文件夹则自动识别入口。"""
         for url in event.mimeData().urls():
             path = url.toLocalFile()
-            if path and Path(path).is_file():
+            if not path:
+                continue
+            if Path(path).is_dir():
+                self._load_folder(path)
+                break
+            if Path(path).is_file():
                 self.script_edit.setText(path)
                 break
 

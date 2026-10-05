@@ -2,7 +2,14 @@
 
 from .command_builder import build_command
 from .config import PackConfig
+from .entry_finder import scan_entry_candidates
 from .packer import Packer
 from .process_runner import ProcessRunner
 
-__all__ = ["PackConfig", "build_command", "ProcessRunner", "Packer"]
+__all__ = [
+    "PackConfig",
+    "build_command",
+    "scan_entry_candidates",
+    "ProcessRunner",
+    "Packer",
+]
