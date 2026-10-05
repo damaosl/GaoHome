@@ -1,0 +1,10 @@
+# 运行时依赖（安装: pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple）
+fastapi
+uvicorn
+brotli
+zstandard
+pywebview
+mitmproxy
+
+# 开发/测试依赖（可选）
+# httpx

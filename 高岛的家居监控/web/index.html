@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>高岛的家居监控</title>
+<link rel="icon" href="/res/app.ico">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="dot" id="liveDot"></span>
+    <h1>高岛的家居监控</h1>
+    <span class="tag">REQABLE 联动 · 实时抓包</span>
+  </div>
+  <div class="stat-row" id="statRow">
+    <div class="chip"><span class="k">总请求</span><span class="v" id="stTotal">0</span></div>
+    <div class="chip"><span class="k">错误</span><span class="v warn" id="stErrors">0</span></div>
+    <div class="chip"><span class="k">告警</span><span class="v alert" id="stAlerts">0</span></div>
+    <div class="chip"><span class="k">警告</span><span class="v" id="stWarns">0</span></div>
+    <div class="chip"><span class="k">平均耗时</span><span class="v" id="stAvg">-</span></div>
+    <div class="chip"><span class="k">响应流量</span><span class="v" id="stTraffic">0 B</span></div>
+  </div>
+</header>
+
+<nav class="toolbar">
+  <select id="fMethod" title="方法">
+    <option value="">方法</option>
+    <option>GET</option><option>POST</option><option>PUT</option>
+    <option>DELETE</option><option>PATCH</option><option>HEAD</option><option>OPTIONS</option>
+  </select>
+  <select id="fStatus" title="状态">
+    <option value="">状态</option>
+    <option value="2">2xx</option><option value="3">3xx</option>
+    <option value="4">4xx</option><option value="5">5xx</option>
+    <option value="0">无响应</option>
+  </select>
+  <select id="fLevel" title="等级">
+    <option value="">等级</option>
+    <option value="alert">告警</option>
+    <option value="warn">警告</option>
+    <option value="info">正常</option>
+  </select>
+  <input id="fHost" type="text" placeholder="域名筛选…">
+  <input id="fSearch" type="text" placeholder="搜索 URL / 内容…">
+  <button id="btnPause" class="ghost">⏸ 暂停</button>
+  <button id="btnMore" class="ghost">↓ 加载历史</button>
+  <button id="btnCapture" class="ghost">独立抓包</button>
+  <button id="btnClear" class="ghost danger">清空数据</button>
+  <span class="count dim" id="listCount"></span>
+</nav>
+
+<main class="grid">
+  <section class="panel">
+    <div class="panel-title">
+      实时抓包
+      <span class="dim" id="feedMeta"></span>
+    </div>
+    <ul id="feedList"></ul>
+    <div class="empty" id="feedEmpty">
+      等待小黄鸟上报数据…
+      <span class="dim">在 Reqable（工具 → 报告服务器）中添加规则：URL 规则填 <code>*</code>，接收地址填 <code>http://127.0.0.1:8090/report</code></span>
+    </div>
+  </section>
+
+  <aside class="panel">
+    <div class="tabs">
+      <button class="tab active" data-tab="detail">详情</button>
+      <button class="tab" data-tab="feedback">反馈 <span class="badge" id="fbBadge">0</span></button>
+    </div>
+    <div class="tab-body" id="tabDetail">
+      <div class="empty">点击左侧记录查看请求 / 响应详情</div>
+    </div>
+    <div class="tab-body hidden" id="tabFeedback"></div>
+  </aside>
+</main>
+
+<footer class="statusbar">
+  <span id="wsState">WS: 连接中…</span>
+  <span>监听: http://127.0.0.1:8090/report</span>
+  <span id="capState"></span>
+  <span id="buffered"></span>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
