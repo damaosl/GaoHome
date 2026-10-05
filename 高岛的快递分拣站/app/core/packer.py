@@ -75,6 +75,11 @@ class Packer:
         tmp_dir = tempfile.mkdtemp(prefix="gaodao_launcher_")
         self.config.launcher_script = write_launcher(payload_name, tmp_dir)
 
+    @property
+    def output_dir(self) -> str:
+        """打包产物的输出目录（打包成功后可供 UI 展示与打开）。"""
+        return str(self.config.resolved_output_dir)
+
     def cancel(self) -> None:
         """取消正在进行的打包。"""
         if self._runner is not None:

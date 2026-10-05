@@ -36,6 +36,15 @@ class TestMainWindow(unittest.TestCase):
         self.assertIn("hello", w.log_view.toPlainText())
         w.close()
 
+    def test_output_location_display(self):
+        """打包成功后存储位置会显示，并启用打开目录按钮。"""
+        w = MainWindow()
+        self.assertEqual(w.output_edit.text(), "")
+        w._on_output_dir("C:/some/dist")
+        self.assertEqual(w.output_edit.text(), "C:/some/dist")
+        self.assertTrue(w.open_dir_btn.isEnabled())
+        w.close()
+
 
 if __name__ == "__main__":
     unittest.main()

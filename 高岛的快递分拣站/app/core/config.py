@@ -76,6 +76,22 @@ class PackConfig:
         """打包对象是否为可直接编译的 Python 脚本。"""
         return Path(self.script_path).suffix.lower() in PYTHON_SUFFIXES
 
+    @property
+    def resolved_output_dir(self) -> Path:
+        """打包产物的输出目录（存储位置）。
+
+        与 command_builder/packer 的实际行为保持一致：
+        - 未指定 output_dir 时，PyInstaller 默认在"打包时的工作目录"下生成
+          dist；packer 以脚本所在目录为工作目录，因此默认产物在脚本旁；
+        - 指定 output_dir（--distpath）时以它为准，相对路径同样基于脚本所在
+          目录解析。
+        """
+        script_dir = Path(self.script_path).resolve().parent
+        if self.output_dir:
+            out = Path(self.output_dir)
+            return out.resolve() if out.is_absolute() else (script_dir / out).resolve()
+        return script_dir / "dist"
+
     # ---- 校验 ----
     def validate(self) -> List[str]:
         """校验配置，返回错误信息列表；空列表表示通过。

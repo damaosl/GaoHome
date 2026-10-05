@@ -1,6 +1,6 @@
 """主窗口：极简风格的一键打包界面。
 
-布局：标题 → 分隔线 → 文件选择 → 选项 → 图标（可选）→ 按钮 → 日志。
+布局：标题 → 分隔线 → 文件选择 → 选项 → 图标（可选）→ 按钮 → 存储位置 → 日志。
 单列纵向流、大留白，与 theme 的极简风格一致。
 """
 from __future__ import annotations
@@ -103,6 +103,13 @@ class MainWindow(QMainWindow):
         btns.addWidget(self.cancel_btn)
         root.addLayout(btns)
 
+        # 存储位置（打包成功后显示产物输出目录）
+        root.addWidget(self._section("存储位置"))
+        self.output_edit = QLineEdit()
+        self.output_edit.setReadOnly(True)
+        self.output_edit.setPlaceholderText("打包成功后显示产物存储位置")
+        root.addWidget(self.output_edit)
+
         # 日志区
         log_header = QHBoxLayout()
         log_header.addWidget(self._section("日志"))
@@ -187,12 +194,14 @@ class MainWindow(QMainWindow):
         )
 
         self._append_log(f"开始打包：{script}")
+        self.output_edit.clear()
         self.open_dir_btn.setEnabled(False)
         self._set_running(True)
 
         self._worker = PackWorker(config)
         self._worker.log.connect(self._append_log)
         self._worker.pack_done.connect(self._on_pack_done)
+        self._worker.output_dir.connect(self._on_output_dir)
         self._worker.start()
 
     def _cancel_pack(self) -> None:
@@ -204,13 +213,17 @@ class MainWindow(QMainWindow):
         self._set_running(False)
         if code == 0:
             self._append_log("✓ 打包成功")
-            self._dist_dir = str(Path(self.script_edit.text().strip()).parent / "dist")
-            self._append_log(f"产物目录：{self._dist_dir}")
-            self.open_dir_btn.setEnabled(True)
         else:
             self._append_log("✗ 打包失败（详见上方日志）")
         # 保留引用直到线程结束；置空以便下次打包复用
         self._worker = None
+
+    def _on_output_dir(self, path: str) -> None:
+        """打包成功后的产物存储目录：展示在界面并允许打开。"""
+        self._dist_dir = path
+        self.output_edit.setText(path)
+        self._append_log(f"产物目录：{path}")
+        self.open_dir_btn.setEnabled(True)
 
     def _append_log(self, line: str) -> None:
         self.log_view.appendPlainText(line)

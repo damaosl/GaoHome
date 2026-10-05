@@ -15,13 +15,15 @@ class PackWorker(QThread):
     """在后台线程执行一次打包。
 
     信号：
-        log       : str —— 一行打包日志（stdout/stderr 合并流）
-        pack_done : int —— 打包完成，参数为退出码（0 成功）
+        log        : str —— 一行打包日志（stdout/stderr 合并流）
+        pack_done  : int —— 打包完成，参数为退出码（0 成功）
+        output_dir : str —— 打包成功后的产物存储目录
     """
 
     # 注意：不能覆盖 QThread 自带的 finished（无参）信号，故取名 pack_done
     log = Signal(str)
     pack_done = Signal(int)
+    output_dir = Signal(str)  # 打包成功后的产物存储目录
 
     def __init__(self, config: PackConfig, parent=None) -> None:
         super().__init__(parent)
@@ -31,6 +33,8 @@ class PackWorker(QThread):
     def run(self) -> None:  # noqa: D102 - QThread 入口
         code = self._packer.pack()
         self.pack_done.emit(code)
+        if code == 0:
+            self.output_dir.emit(self._packer.output_dir)
 
     def cancel(self) -> None:
         """取消打包（可从主线程调用，terminate 是线程安全的）。"""

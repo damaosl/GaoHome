@@ -20,16 +20,19 @@ class TestPackWorker(unittest.TestCase):
     def test_signals_on_fail_fast(self):
         logs: list[str] = []
         codes: list[int] = []
+        outputs: list[str] = []
 
         worker = PackWorker(PackConfig(script_path="不存在.py"))
         worker.log.connect(logs.append)
         worker.pack_done.connect(codes.append)
+        worker.output_dir.connect(outputs.append)
 
         # 直接调用 run()（同线程直连，信号同步触发），不走事件循环
         worker.run()
 
         self.assertEqual(codes, [1])
         self.assertTrue(any("文件不存在" in ln for ln in logs))
+        self.assertEqual(outputs, [])  # 失败时不发射 output_dir
 
 
 if __name__ == "__main__":
